@@ -4,7 +4,7 @@
 - **Encrypt/decrypt:** Both operations supported.
 - **Efficient Implementation:**
   - Minimize bootstraps, as they dominate runtime.
-  - Use lookup tables (LUTs) for the S-Box and at the `MixColumns` step.
+  - Use lookup tables (LUTs) for the `S-Box` and at the `MixColumns` step.
 - **shortint Type with LUT:** 
   - Supports a total of 8-bits, message and carry.
   - For bitwise XOR, shortint requires carry bits equal to the number of bits.
@@ -24,10 +24,10 @@
   - Support for 2 × 16 threads, one per nibble.
 - **Mode of Operation:**
    - Cipher mode OFB (Output Feedback) style, to XOR the stream.
-   - `Encrypt(IV(the_message), key) -> Encrypt(#, key)`
+   - `Encrypt(IV/the_message, key) -> Encrypt(#, key)`
 
 ### State matrix indices
-#### byte layoout
+#### byte layout
 
 | Row/Col | 0  | 1  | 2  | 3  |
 |---------|----|----|----|----|
@@ -36,7 +36,7 @@
 | **2**   | 2  | 6  | 10 | 14 |
 | **3**   | 3  | 7  | 11 | 15 |
 
-#### nibble layoout
+#### nibble layout
 MSB, LSB
 
 | Row/Col | 0     | 1       | 2       | 3      |
