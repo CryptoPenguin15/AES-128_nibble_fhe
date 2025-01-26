@@ -46,26 +46,26 @@ MSB, LSB
 | **2**   | 4, 5  | 12, 13  | 20, 21  | 28, 29 |
 | **3**   | 6, 7  | 14, 15  | 22, 23  | 30, 31 |
 
-## PBS
-### PBS per operation
+## Work performed
+### Operations
 
-| Operation    | PBS Count | PBS / thread | Details              |
+| Operation    | OPs Count | OPs / thread | Details              |
 |--------------|-----------|--------------|----------------------|
 | **add_key**  | 32        | 1            | bitwise XOR          |
-| **sub_**     | 32        | 1            | bitwise XOR          |
+| **sub_**     | 32        | 1            | One LUT              |
 | **rot_rows** | 0         | 0            |                      |
 | **mix_cols** | 160       | 5            | Two LUTs, three XORs |
 
-### PBS encrypt
+### Encrypt
 Time taken can be estimated from
 
-| Operation    | Tot. operations | PBS / thread | 
+| Operation    | Tot. operations | OPs / thread | 
 |--------------|-----------------|--------------|
 | **add_key**  | 11              | 11           |
 | **sub_**     | 10              | 10           |
 | **rot_rows** | 10              | 0            |
-| **mix_cols** | 9 * 5           | 45           |
-| **Total**    | **76**          | **66**       |   
+| **mix_cols** | 9 * 5           | 225          |
+| **Total**    | **76**          | **246**      |   
 
 ## Example Invocation
 ### Binary
