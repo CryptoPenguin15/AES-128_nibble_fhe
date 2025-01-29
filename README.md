@@ -1,7 +1,7 @@
 # Design
 
 - **Readable:** Close to the FIPS-197 documentation.
-- **Encrypt/decrypt:** Both operations supported.
+- **Encrypt/decrypt:** Both operations supported. Each block is outsourced to the cloud, with a fresh key pair.
 - **Efficient Implementation:**
   - Minimize bootstraps, as they dominate runtime.
   - Use lookup tables (LUTs) for the `S-Box` and at the `MixColumns` step.
@@ -19,7 +19,6 @@
    - Example: The complete g2 state and g3 state are first retrieved, and the g2_g3_xor state afterwards. 
 - **Key Expansion:** 
   - Performed as an offline phase.
-  - Additional tables for combined operations can be precomputed.
 - **Parallelism:**
   - Support for 2 × 16 threads, one per nibble.
 - **Mode of Operation:**
