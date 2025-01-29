@@ -1,8 +1,9 @@
 # Design
 
 - **Readable:** Close to the FIPS-197 documentation.
-- **Encrypt/decrypt:** Default CTR encrypt mode.
-  - OFB mode with both operations supported. Each block is outsourced to the cloud, with a fresh key pair.
+- **Encrypt/decrypt:** 
+  - Default CTR encrypt mode.
+  - OFB mode with both operations also supported. Each block is outsourced to the cloud, with a fresh key pair.
 - **Efficient Implementation:**
   - Minimize bootstraps, as they dominate runtime.
   - Use lookup tables (LUTs) for the `S-Box` and at the `MixColumns` step.
