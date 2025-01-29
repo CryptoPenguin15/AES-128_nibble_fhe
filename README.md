@@ -79,7 +79,7 @@ Options:
   -n, --number-of-outputs <number_of_outputs>
           Sets the number of blocks [default: 1]
   -i, --initialization-vector <iv>
-          Initialization vector [default: 00112233445566778899aabbccddeeff]
+          Initialization vector [default: 0123456789abcdef]
   -k, --key <key>
           Key value [default: 000102030405060708090a0b0c0d0e0f]
   -h, --help
@@ -89,7 +89,7 @@ Options:
 ```
 
 ```bash
-cargo run --release -- -n 1 -i "00112233445566778899aabbccddeeff" -k "0123456789abcdef0123456789abcdef"
+cargo run --release -- -n 1 -i "0123456789abcdef" -k "0123456789abcdef0123456789abcdef"
 ```
 
 ### Test suite
