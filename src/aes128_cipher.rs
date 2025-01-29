@@ -11,7 +11,7 @@ pub fn encrypt_block_iter_fhe(
     let mut out_iter = [0u8; BLOCKSIZE];
 
     let start = Instant::now();
-    let xk = key_expansion(&key);
+    let xk = key_expansion(key);
     let key_expansion_elapsed = start.elapsed();
     println!("AES key expansion took: {key_expansion_elapsed:?}");
 
@@ -29,7 +29,7 @@ pub fn decrypt_block_iter_fhe(
     let mut out_iter = [0u8; BLOCKSIZE];
 
     let start = Instant::now();
-    let xk = key_expansion(&key);
+    let xk = key_expansion(key);
     let key_expansion_elapsed = start.elapsed();
     println!("AES key expansion took: {key_expansion_elapsed:?}");
 

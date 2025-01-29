@@ -3,7 +3,7 @@ use crate::aes128_keyschedule::{BLOCKSIZE, KEYSIZE, ROUNDKEYSIZE, ROUNDS};
 use crate::aes128_tables::{GMUL2, GMUL3, GMUL9, GMULB, GMULD, GMULE, SBOX, SBOX_INV, gen_tbl};
 
 use tfhe::shortint::server_key::BivariateLookupTableOwned;
-use tfhe::shortint::{Ciphertext, ServerKey}; // nibble, xor support
+use tfhe::shortint::{Ciphertext, ClientKey, ServerKey}; // nibble, xor support
 
 use std::time::Instant;
 
@@ -55,9 +55,7 @@ fn add_round_key_fhe(state: &mut [Ciphertext], rkey: &[Ciphertext], sk: &ServerK
     let start = Instant::now();
 
     state.par_iter_mut().enumerate().for_each(|(i, elem)| {
-        let start = Instant::now();
         *elem = sk.unchecked_bitxor(elem, &rkey[i]);
-        println!("unchecked_bitxor         {:.2?}", start.elapsed());
     });
 
     println!("add_round_key_fhe       {:.2?}", start.elapsed());
@@ -113,10 +111,10 @@ fn shift_rows_fhe(state: &mut [Ciphertext]) {
     let tmp = state.to_vec();
 
     // col. 0
-    state[2 * 0] = tmp[2 * 0].clone();
-    state[2 * 0 + 1] = tmp[2 * 0 + 1].clone();
-    state[2 * 1] = tmp[2 * 5].clone();
-    state[2 * 1 + 1] = tmp[2 * 5 + 1].clone();
+    state[0] = tmp[0].clone();
+    state[1] = tmp[1].clone();
+    state[2] = tmp[2 * 5].clone();
+    state[2 + 1] = tmp[2 * 5 + 1].clone();
     state[2 * 2] = tmp[2 * 10].clone();
     state[2 * 2 + 1] = tmp[2 * 10 + 1].clone();
     state[2 * 3] = tmp[2 * 15].clone();
@@ -145,8 +143,8 @@ fn shift_rows_fhe(state: &mut [Ciphertext]) {
     // col. 3
     state[2 * 12] = tmp[2 * 12].clone();
     state[2 * 12 + 1] = tmp[2 * 12 + 1].clone();
-    state[2 * 13] = tmp[2 * 1].clone();
-    state[2 * 13 + 1] = tmp[2 * 1 + 1].clone();
+    state[2 * 13] = tmp[2].clone();
+    state[2 * 13 + 1] = tmp[2 + 1].clone();
     state[2 * 14] = tmp[2 * 6].clone();
     state[2 * 14 + 1] = tmp[2 * 6 + 1].clone();
     state[2 * 15] = tmp[2 * 11].clone();
@@ -161,10 +159,10 @@ fn inv_shift_rows_fhe(state: &mut [Ciphertext]) {
     let tmp = state.to_vec();
 
     // col. 0
-    state[2 * 0] = tmp[2 * 0].clone();
-    state[2 * 0 + 1] = tmp[2 * 0 + 1].clone();
-    state[2 * 1] = tmp[2 * 13].clone();
-    state[2 * 1 + 1] = tmp[2 * 13 + 1].clone();
+    state[0] = tmp[0].clone();
+    state[1] = tmp[1].clone();
+    state[2] = tmp[2 * 13].clone();
+    state[2 + 1] = tmp[2 * 13 + 1].clone();
     state[2 * 2] = tmp[2 * 10].clone();
     state[2 * 2 + 1] = tmp[2 * 10 + 1].clone();
     state[2 * 3] = tmp[2 * 7].clone();
@@ -173,8 +171,8 @@ fn inv_shift_rows_fhe(state: &mut [Ciphertext]) {
     // col. 1
     state[2 * 4] = tmp[2 * 4].clone();
     state[2 * 4 + 1] = tmp[2 * 4 + 1].clone();
-    state[2 * 5] = tmp[2 * 1].clone();
-    state[2 * 5 + 1] = tmp[2 * 1 + 1].clone();
+    state[2 * 5] = tmp[2].clone();
+    state[2 * 5 + 1] = tmp[2 + 1].clone();
     state[2 * 6] = tmp[2 * 14].clone();
     state[2 * 6 + 1] = tmp[2 * 14 + 1].clone();
     state[2 * 7] = tmp[2 * 11].clone();
@@ -222,7 +220,7 @@ fn lut_state(
         }
     });
 
-    println!("m_col lut time         {:.2?}", start.elapsed());
+    println!("m_col lut time          {:.2?}", start.elapsed());
     let tmp: [Ciphertext; 32] = tmp.try_into().expect("Expected a Vec of length 32");
 
     tmp
@@ -341,6 +339,74 @@ fn inv_mix_columns_fhe(
     println!("inv_mix_columns_fhe time {:.2?}", start.elapsed());
 }
 
+pub fn encrypt_one_block_fhe(
+    input: &[u8; KEYSIZE],
+    xk: &[u8; ROUNDKEYSIZE],
+    output: &mut [u8; BLOCKSIZE],
+    sk: &ServerKey,
+    ck: &ClientKey,
+) {
+    let mut state = [0u8; BLOCKSIZE];
+    state.copy_from_slice(input);
+
+    let mut state_ck = enc_nibble_vec(&state, ck);
+    let xk_ck = enc_nibble_vec(xk, ck);
+
+    println!("generate_bivariate_tables");
+    let (sbox_msb, sbox_lsb) = gen_tbl(&SBOX, sk);
+    let (gmul2_msb, gmul2_lsb) = gen_tbl(&GMUL2, sk);
+    let (gmul3_msb, gmul3_lsb) = gen_tbl(&GMUL3, sk);
+
+    let start = Instant::now();
+
+    print_hex_nibble_fhe("input", 0, &state_ck, ck);
+    add_round_key_fhe(&mut state_ck, &xk_ck[..2 * BLOCKSIZE], sk);
+    print_hex_nibble_fhe("k_sch", 0, &state_ck, ck);
+
+    for round in 1..ROUNDS {
+        sub_bytes_fhe(&mut state_ck, &sbox_msb, &sbox_lsb, sk);
+        print_hex_nibble_fhe("s_box", round, &state_ck, ck);
+
+        shift_rows_fhe(&mut state_ck);
+        print_hex_nibble_fhe("s_row", round, &state_ck, ck);
+
+        mix_columns_fhe(
+            &mut state_ck,
+            &gmul2_msb,
+            &gmul2_lsb,
+            &gmul3_msb,
+            &gmul3_lsb,
+            sk,
+        );
+        print_hex_nibble_fhe("m_col", round, &state_ck, ck);
+
+        add_round_key_fhe(
+            &mut state_ck,
+            &xk_ck[round * 2 * KEYSIZE..2 * ROUNDKEYSIZE],
+            sk,
+        );
+        print_hex_nibble_fhe("k_sch", round, &state_ck, ck);
+    }
+
+    sub_bytes_fhe(&mut state_ck, &sbox_msb, &sbox_lsb, sk);
+    print_hex_nibble_fhe("s_box", 10, &state_ck, ck);
+
+    shift_rows_fhe(&mut state_ck);
+    print_hex_nibble_fhe("s_row", 10, &state_ck, ck);
+
+    add_round_key_fhe(
+        &mut state_ck,
+        &xk_ck[2 * KEYSIZE * ROUNDS..2 * ROUNDKEYSIZE],
+        sk,
+    );
+    print_hex_nibble_fhe("k_sch", 10, &state_ck, ck);
+
+    println!("encrypt_block_fhe         {:.2?}", start.elapsed());
+
+    let output_vec = dec_nibble_vec(&state_ck, ck);
+    output.copy_from_slice(&output_vec);
+}
+
 pub fn encrypt_block_fhe(
     input: &[u8; KEYSIZE],
     xk: &[u8; ROUNDKEYSIZE],
@@ -415,8 +481,6 @@ pub fn encrypt_block_fhe(
 
     let output_vec = dec_nibble_vec(&state_ck, &ck);
     output.copy_from_slice(&output_vec);
-    println!("outpt_vec {:?}", output_vec);
-    println!("outpt     {:?}", output);
 }
 
 pub fn decrypt_block_fhe(
