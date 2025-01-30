@@ -97,7 +97,7 @@ Running all the tests at once probably overloads the system.
 ```bash
 cargo test --release -- --nocapture
 ```
-Cherry-pick with
+Cherry-pick tests with
 ```
 cargo test --release -- --nocapture ::test_endianess -- --exact
 ```
