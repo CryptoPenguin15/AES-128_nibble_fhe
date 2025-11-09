@@ -1,13 +1,22 @@
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_KS_PBS;
-use tfhe::shortint::parameters::PARAM_MESSAGE_4_CARRY_4_KS_PBS;
+use tfhe::shortint::parameters::v1_4::V1_4_PARAM_MESSAGE_2_CARRY_2_KS_PBS_TUNIFORM_2M128;
+use tfhe::shortint::parameters::v1_4::V1_4_PARAM_MESSAGE_4_CARRY_4_KS_PBS_TUNIFORM_2M128;
+//use tfhe::shortint::parameters::current_params::V1_4_PARAM_MULTI_BIT_GROUP_4_MESSAGE_4_CARRY_4_KS_PBS_GAUSSIAN_2M64;
 use tfhe::shortint::{Ciphertext, ClientKey, ServerKey, gen_keys};
+//use tfhe::{ConfigBuilder, generate_keys};
 
 use std::fmt::Write;
 use std::time::Instant;
 
 pub fn gen_nibble_keys() -> (ClientKey, ServerKey) {
     let start = Instant::now();
-    let (ck, sk) = gen_keys(PARAM_MESSAGE_4_CARRY_4_KS_PBS);
+    let (ck, sk) = gen_keys(V1_4_PARAM_MESSAGE_4_CARRY_4_KS_PBS_TUNIFORM_2M128);
+    /*
+    let config = ConfigBuilder::default()
+        .use_custom_parameters(V1_4_PARAM_MULTI_BIT_GROUP_4_MESSAGE_4_CARRY_4_KS_PBS_GAUSSIAN_2M64)
+        .build();
+
+    let (ck, sk) = generate_keys(config);
+    */
     println!("gen keys time           {:.2?}", start.elapsed());
 
     (ck, sk)
@@ -15,7 +24,7 @@ pub fn gen_nibble_keys() -> (ClientKey, ServerKey) {
 
 pub fn gen_crumb_keys() -> (ClientKey, ServerKey) {
     let start = Instant::now();
-    let (ck, sk) = gen_keys(PARAM_MESSAGE_2_CARRY_2_KS_PBS);
+    let (ck, sk) = gen_keys(V1_4_PARAM_MESSAGE_2_CARRY_2_KS_PBS_TUNIFORM_2M128);
     println!("gen keys time           {:.2?}", start.elapsed());
 
     (ck, sk)

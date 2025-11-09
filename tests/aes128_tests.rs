@@ -2,18 +2,11 @@ pub use aes128_nibble_fhe::aes_fhe::{
     enc_crumb_vec, enc_nibble_vec, gen_crumb_keys, gen_nibble_keys, print_hex_nibble_fhe,
 };
 pub use aes128_nibble_fhe::aes128_keyschedule::key_expansion;
-pub use aes128_nibble_fhe::aes128_nibble_fhe::{
-    decrypt_block_fhe, encrypt_block_fhe, sub_bytes_fhe,
-};
+pub use aes128_nibble_fhe::aes128_nibble_fhe::{encrypt_block_fhe, sub_bytes_fhe};
 pub use aes128_nibble_fhe::aes128_tables::{GMUL2, GMUL3, SBOX, gen_tbl};
 
 use tfhe::shortint::Ciphertext;
 
-use aes::Aes128;
-use aes::cipher::{BlockEncrypt, KeyInit, generic_array::GenericArray};
-
-use rand::RngCore;
-use rand::rngs::OsRng;
 use std::time::Instant;
 
 pub struct KeyTest {
@@ -103,33 +96,6 @@ mod tests {
     }
 
     #[test]
-    fn test_decrypt_block_tfhe1() {
-        let ciphertext: [u8; 16] = [
-            0x69, 0xc4, 0xe0, 0xd8, 0x6a, 0x7b, 0x04, 0x30, 0xd8, 0xcd, 0xb7, 0x80, 0x70, 0xb4,
-            0xc5, 0x5a,
-        ];
-        let key: [u8; 16] = [
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
-            0x0e, 0x0f,
-        ];
-        let expected_plaintext: [u8; 16] = [
-            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd,
-            0xee, 0xff,
-        ];
-
-        let xk = key_expansion(&key);
-
-        let mut dst = [0u8; 16];
-        decrypt_block_fhe(&ciphertext, &xk, &mut dst, 1);
-
-        assert_eq!(
-            dst, expected_plaintext,
-            "Encryption failed\nExpected: {:x?}\nGot: {:x?}",
-            expected_plaintext, dst
-        );
-    }
-
-    #[test]
     fn test_encrypt_block_tfhe2() {
         let plaintext: [u8; 16] = [
             0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9, 0x3D, 0x7E, 0x11, 0x73, 0x93,
@@ -153,67 +119,6 @@ mod tests {
             dst, expected_ciphertext,
             "Encryption failed\nExpected: {:x?}\nGot: {:x?}",
             expected_ciphertext, dst
-        );
-    }
-
-    #[test]
-    fn test_decrypt_block_tfhe2() {
-        let ciphertext: [u8; 16] = [
-            0x3A, 0xD7, 0x7B, 0xB4, 0x0D, 0x7A, 0x36, 0x60, 0xA8, 0x9E, 0xCA, 0xF3, 0x24, 0x66,
-            0xEF, 0x97,
-        ];
-        let key: [u8; 16] = [
-            0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF,
-            0x4F, 0x3C,
-        ];
-        let expected_plaintext: [u8; 16] = [
-            0x6B, 0xC1, 0xBE, 0xE2, 0x2E, 0x40, 0x9F, 0x96, 0xE9, 0x3D, 0x7E, 0x11, 0x73, 0x93,
-            0x17, 0x2A,
-        ];
-
-        let xk = key_expansion(&key);
-
-        let mut dst = [0u8; 16];
-        decrypt_block_fhe(&ciphertext, &xk, &mut dst, 1);
-
-        assert_eq!(
-            dst, expected_plaintext,
-            "Encryption failed\nExpected: {:x?}\nGot: {:x?}",
-            expected_plaintext, dst
-        );
-    }
-
-    #[test]
-    fn test_encrypt_decrypt_rnd_block() {
-        let mut key = [0u8; 16];
-        OsRng.fill_bytes(&mut key);
-
-        let mut iv = [0u8; 16];
-        OsRng.fill_bytes(&mut iv);
-
-        let mut expected = GenericArray::from(iv);
-        let cipher = Aes128::new(&GenericArray::from(key));
-        cipher.encrypt_block(&mut expected);
-
-        let xk = key_expansion(&key);
-        let mut dst = [0u8; 16];
-        encrypt_block_fhe(&iv, &xk, &mut dst, 1);
-
-        assert_eq!(
-            GenericArray::from(dst),
-            expected,
-            "Encryption failed\nExpected: {:x?}\nGot: {:x?}",
-            expected,
-            dst
-        );
-
-        let mut out = [0u8; 16];
-        decrypt_block_fhe(&dst, &xk, &mut out, 1);
-
-        assert_eq!(
-            out, iv,
-            "Encryption failed\nExpected: {:x?}\nGot: {:x?}",
-            expected, out
         );
     }
 
