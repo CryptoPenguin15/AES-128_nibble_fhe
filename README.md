@@ -1,9 +1,8 @@
 # Design
 
 - **Readable:** Close to the FIPS-197 documentation.
-- **Encrypt/decrypt:** 
-  - Default CTR encrypt mode.
-  - OFB mode with both operations also supported. Each block is outsourced to the cloud, with a fresh key pair.
+- **Key type:** Multi bit group keys created.
+- **Encrypt/decrypt:** Keystream output. 
 - **Efficient Implementation:**
   - Minimize bootstraps, as they dominate runtime.
   - Use lookup tables (LUTs) for the `S-Box` and at the `MixColumns` step.
@@ -24,8 +23,8 @@
 - **Parallelism:**
   - Support for 2 × 16 threads, one per nibble.
 - **Mode of Operation:**
-   - Cipher mode OFB (Output Feedback) style, to XOR the stream.
-   - `Encrypt(IV/the_message, key) -> Encrypt(#, key)`
+   - Cipher mode CTR.
+   - Keystream block i from AES(nonce || counter_i, key).
 
 ### State matrix indices
 #### byte layout

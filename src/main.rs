@@ -1,4 +1,3 @@
-// $ cargo run --release -- --number-of-outputs 1 --iv "" --key ""
 pub mod aes128_cipher;
 pub mod aes128_keyschedule;
 pub mod aes128_nibble_fhe;
@@ -6,7 +5,7 @@ pub mod aes128_tables;
 pub mod aes_fhe;
 
 pub use crate::aes_fhe::gen_nibble_keys;
-pub use crate::aes128_cipher::{decrypt_block_iter_fhe, encrypt_block_iter_fhe};
+pub use crate::aes128_cipher::encrypt_block_iter_fhe;
 pub use crate::aes128_keyschedule::{BLOCKSIZE, key_expansion};
 pub use crate::aes128_nibble_fhe::encrypt_one_block_fhe;
 
@@ -16,7 +15,9 @@ use std::fmt::Write;
 use std::time::{Duration, Instant};
 
 use aes::Aes128;
-use aes::cipher::{BlockDecrypt, BlockEncrypt, KeyInit, generic_array::GenericArray};
+#[allow(deprecated)]
+use aes::cipher::generic_array::GenericArray;
+use aes::cipher::{BlockEncrypt, KeyInit};
 
 const IV: &str = "0123456789abcdef";
 const KEY: &str = "000102030405060708090a0b0c0d0e0f";
@@ -25,13 +26,6 @@ fn cli() -> (u32, u32, String, String) {
     let matches = Command::new("CLI Parser AES")
         .version("1.0")
         .about("Parses command-line arguments")
-        .arg(
-            Arg::new("mode")
-                .long("mode")
-                .short('m')
-                .help("Mode CTR or OFB")
-                .default_value("1"),
-        )
         .arg(
             Arg::new("number_of_outputs")
                 .long("number-of-outputs")
@@ -55,11 +49,7 @@ fn cli() -> (u32, u32, String, String) {
         )
         .get_matches();
 
-    let mode = matches
-        .get_one::<String>("mode")
-        .expect("Argument missing")
-        .parse::<u32>()
-        .expect("Invalid number for number-of-outputs");
+    let mode = 1;
 
     let number_of_outputs = matches
         .get_one::<String>("number_of_outputs")
@@ -116,7 +106,9 @@ fn main() {
                 acc
             });
 
+            #[allow(deprecated)]
             let mut ga_block = GenericArray::from(iv);
+            #[allow(deprecated)]
             let cipher = Aes128::new(&GenericArray::from(key));
             cipher.encrypt_block(&mut ga_block);
             let aes_ref: [u8; 16] = ga_block.into();
@@ -144,26 +136,5 @@ fn main() {
 
         println!("AES key expansion took: {key_expansion_elapsed:?}");
         println!("AES of #{no} outputs computed in: {elapsed:?}");
-    } else {
-        let mut ga_block = GenericArray::from(iv);
-        let cipher = Aes128::new(&GenericArray::from(key));
-
-        for _ in 0..no {
-            cipher.encrypt_block(&mut ga_block);
-        }
-        let out = encrypt_block_iter_fhe(&iv, &key, no as usize);
-
-        println!("Ref AES-OFB        {:x}", ga_block);
-        println!("enc                {:?} ", out);
-        assert_eq!(ga_block, GenericArray::from(out));
-
-        for _ in 0..no {
-            cipher.decrypt_block(&mut ga_block);
-        }
-        let out = decrypt_block_iter_fhe(&out, &key, no as usize);
-
-        println!("Ref AES-OFB        {:x}", ga_block);
-        println!("dec                {:?}", out);
-        assert_eq!(ga_block, GenericArray::from(out));
     }
 }
