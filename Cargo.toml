@@ -3,8 +3,13 @@ name = "aes128_nibble_fhe"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+cpu = []
+gpu = ["tfhe/gpu"]
+
 [dependencies]
-tfhe = { version = "1.4.2", features = ["integer"] }
+tfhe = { version = "1.4.2", default-features = false, features = ["integer"] }
 aes = "0.8.4"
 rand = "0.8.5"
 num_cpus = "1.16.0"
@@ -13,3 +18,4 @@ rayon = "1.10.0"
 
 [profile.release]
 lto = "fat"
+

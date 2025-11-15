@@ -1,22 +1,26 @@
-use tfhe::shortint::parameters::v1_4::V1_4_PARAM_MESSAGE_2_CARRY_2_KS_PBS_TUNIFORM_2M128;
-use tfhe::shortint::parameters::v1_4::V1_4_PARAM_MESSAGE_4_CARRY_4_KS_PBS_TUNIFORM_2M128;
-//use tfhe::shortint::parameters::current_params::V1_4_PARAM_MULTI_BIT_GROUP_4_MESSAGE_4_CARRY_4_KS_PBS_GAUSSIAN_2M64;
+#[cfg(feature = "gpu")]
+use tfhe::shortint::parameters::current_params::{
+    V1_4_PARAM_GPU_MULTI_BIT_GROUP_2_MESSAGE_2_CARRY_2_KS_PBS_GAUSSIAN_2M64,
+    V1_4_PARAM_GPU_MULTI_BIT_GROUP_4_MESSAGE_4_CARRY_4_KS_PBS_GAUSSIAN_2M64,
+};
+#[cfg(not(feature = "gpu"))]
+use tfhe::shortint::parameters::current_params::{
+    V1_4_PARAM_MULTI_BIT_GROUP_2_MESSAGE_2_CARRY_2_KS_PBS_GAUSSIAN_2M64,
+    V1_4_PARAM_MULTI_BIT_GROUP_4_MESSAGE_4_CARRY_4_KS_PBS_GAUSSIAN_2M64,
+};
+
 use tfhe::shortint::{Ciphertext, ClientKey, ServerKey, gen_keys};
-//use tfhe::{ConfigBuilder, generate_keys};
 
 use std::fmt::Write;
 use std::time::Instant;
 
 pub fn gen_nibble_keys() -> (ClientKey, ServerKey) {
     let start = Instant::now();
-    let (ck, sk) = gen_keys(V1_4_PARAM_MESSAGE_4_CARRY_4_KS_PBS_TUNIFORM_2M128);
-    /*
-    let config = ConfigBuilder::default()
-        .use_custom_parameters(V1_4_PARAM_MULTI_BIT_GROUP_4_MESSAGE_4_CARRY_4_KS_PBS_GAUSSIAN_2M64)
-        .build();
-
-    let (ck, sk) = generate_keys(config);
-    */
+    #[cfg(not(feature = "gpu"))]
+    let (ck, sk) = gen_keys(V1_4_PARAM_MULTI_BIT_GROUP_4_MESSAGE_4_CARRY_4_KS_PBS_GAUSSIAN_2M64);
+    #[cfg(feature = "gpu")]
+    let (ck, sk) =
+        gen_keys(V1_4_PARAM_GPU_MULTI_BIT_GROUP_4_MESSAGE_4_CARRY_4_KS_PBS_GAUSSIAN_2M64);
     println!("gen keys time           {:.2?}", start.elapsed());
 
     (ck, sk)
@@ -24,7 +28,11 @@ pub fn gen_nibble_keys() -> (ClientKey, ServerKey) {
 
 pub fn gen_crumb_keys() -> (ClientKey, ServerKey) {
     let start = Instant::now();
-    let (ck, sk) = gen_keys(V1_4_PARAM_MESSAGE_2_CARRY_2_KS_PBS_TUNIFORM_2M128);
+    #[cfg(not(feature = "gpu"))]
+    let (ck, sk) = gen_keys(V1_4_PARAM_MULTI_BIT_GROUP_2_MESSAGE_2_CARRY_2_KS_PBS_GAUSSIAN_2M64);
+    #[cfg(feature = "gpu")]
+    let (ck, sk) =
+        gen_keys(V1_4_PARAM_GPU_MULTI_BIT_GROUP_2_MESSAGE_2_CARRY_2_KS_PBS_GAUSSIAN_2M64);
     println!("gen keys time           {:.2?}", start.elapsed());
 
     (ck, sk)
