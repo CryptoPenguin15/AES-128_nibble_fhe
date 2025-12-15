@@ -2,7 +2,6 @@
 
 - **Readable:** Close to the FIPS-197 documentation.
 - **Key type:** Multi bit group keys created.
-- **Encrypt/decrypt:** Keystream output. 
 - **Efficient Implementation:**
   - Minimize bootstraps, as they dominate runtime.
   - Use lookup tables (LUTs) for the `S-Box` and at the `MixColumns` step.
@@ -66,30 +65,6 @@ Time taken can be estimated from
 | **rot_rows** | 10              | 0            |
 | **mix_cols** | 9 * 5           | 225          |
 | **Total**    | **76**          | **246**      |   
-
-## Example Invocation
-### Binary
-```bash
-cargo run --release -- --help
-
-Usage: aes128_nibble_fhe [OPTIONS]
-
-Options:
-  -n, --number-of-outputs <number_of_outputs>
-          Sets the number of blocks [default: 1]
-  -i, --initialization-vector <iv>
-          Initialization vector [default: 0123456789abcdef]
-  -k, --key <key>
-          Key value [default: 000102030405060708090a0b0c0d0e0f]
-  -h, --help
-          Print help
-  -V, --version
-          Print version
-```
-
-```bash
-cargo run --release -- -n 1 -i "0123456789abcdef" -k "0123456789abcdef0123456789abcdef"
-```
 
 ### Test suite
 Running all the tests at once probably overloads the system.
